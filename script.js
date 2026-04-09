@@ -37,6 +37,7 @@ const spanTotalPendiente = document.getElementById('totalPendiente');
 const spanTotalFinalizados = document.getElementById('totalFinalizados');
 const btnLimpiar = document.getElementById('btnLimpiar');
 const btnEliminarTodo = document.getElementById('btnEliminarTodo');
+const btnDescargar = document.getElementById('btnDescargar');
 
 // 4. Escuchador en tiempo real de la Nube
 onSnapshot(registrosRef, (snapshot) => {
@@ -51,6 +52,7 @@ onSnapshot(registrosRef, (snapshot) => {
 form.addEventListener('submit', agregarRegistro);
 btnLimpiar.addEventListener('click', limpiarFormulario);
 btnEliminarTodo.addEventListener('click', eliminarTodo);
+btnDescargar.addEventListener('click', exportarCSV);
 
 // Funciones Principales
 async function agregarRegistro(event) {
@@ -173,4 +175,36 @@ function crearCelda(texto, labelMobile) {
     td.setAttribute('data-label', labelMobile);
   }
   return td;
+}
+
+// Función para exportar a CSV
+function exportarCSV() {
+  if (registros.length === 0) {
+    alert("No hay datos para exportar.");
+    return;
+  }
+
+  let csvContent = "AMPO,Digitador,Fecha,Cantidad,Estado\n";
+
+  registros.forEach(r => {
+    const ampo = `"${r.ampo}"`;
+    const digitador = `"${r.digitador}"`;
+    const fecha = `"${r.fecha}"`;
+    const pendiente = r.pendiente;
+    const estado = `"${r.estado}"`;
+
+    csvContent += `${ampo},${digitador},${fecha},${pendiente},${estado}\n`;
+  });
+
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Reporte_Digitadores_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
