@@ -1,103 +1,97 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DIGITADORES GOB</title>
   <link rel="stylesheet" href="./styles.css">
-  <!-- Chart.js was removed because it was unused padding. TailwindCSS was removed for a custom modern vanilla css. -->
 </head>
+
 <body>
 
-<main class="container">
-  <header>
-    <h1>DIGITADORES GOB</h1>
-  </header>
+  <main class="container">
+    <header>
+      <h1>DIGITADORES GOB</h1>
+    </header>
 
-  <!-- Formulario envuelto en form para poder usar event.preventDefault() y validación nativa -->
-  <form id="registroForm">
-    <section class="form-grid">
-      <div class="input-group">
-        <label for="ampo">AMPO</label>
-        <input id="ampo" name="ampo" type="text" placeholder="Ej. A-123" required>
+    <form id="registroForm">
+      <section class="form-grid">
+        <div class="input-group">
+          <label for="ampo">AMPO</label>
+          <input id="ampo" name="ampo" type="text" placeholder="Ej. A-123" required>
+        </div>
+        <div class="input-group">
+          <label for="digitador">Digitador</label>
+          <input id="digitador" name="digitador" type="text" placeholder="Nombre completo" required>
+        </div>
+        <div class="input-group">
+          <label for="fecha">Fecha</label>
+          <input id="fecha" name="fecha" type="date" required>
+        </div>
+        <div class="input-group">
+          <label for="pendiente">Pendiente (Cantidad)</label>
+          <input id="pendiente" name="pendiente" type="number" min="0" placeholder="Ej. 5" required>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="submit" class="primary">Agregar Registro</button>
+        <button type="button" id="btnLimpiar" class="secondary">Limpiar form</button>
+        <button type="button" id="btnEliminarTodo" class="danger">Eliminar Todo</button>
       </div>
-      <div class="input-group">
-        <label for="digitador">Digitador</label>
-        <input id="digitador" name="digitador" type="text" placeholder="Nombre completo" required>
+    </form>
+
+    <section class="stats" aria-live="polite">
+      <div class="stats-item">
+        <span>Total Pendientes:</span>
+        <span id="totalPendiente" class="stats-value">0</span>
       </div>
-      <div class="input-group">
-        <label for="fecha">Fecha</label>
-        <input id="fecha" name="fecha" type="date" required>
-      </div>
-      <div class="input-group">
-        <label for="pendiente">Pendiente (Cantidad)</label>
-        <input id="pendiente" name="pendiente" type="number" min="0" placeholder="Ej. 5" required>
+      <div class="stats-item">
+        <span>Total Finalizados:</span>
+        <span id="totalFinalizados" class="stats-value">0</span>
       </div>
     </section>
 
-    <!-- Botones -->
-    <div class="actions">
-      <!-- El botón de submit detona el evento submit del form -->
-      <button type="submit" class="primary">Agregar Registro</button>
-      <button type="button" id="btnLimpiar" class="secondary">Limpiar form</button>
-      <button type="button" id="btnEliminarTodo" class="danger">Eliminar Todo</button>
-    </div>
-  </form>
+    <section>
+      <h2>Pendientes</h2>
+      <div class="table-container table-responsive-mobile">
+        <table id="tablaPendientes">
+          <thead>
+            <tr>
+              <th>AMPO</th>
+              <th>Digitador</th>
+              <th>Fecha</th>
+              <th>Pendiente</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPendientes">
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- Totales -->
-  <section class="stats" aria-live="polite">
-    <div class="stats-item">
-      <span>Total Pendientes:</span>
-      <span id="totalPendiente" class="stats-value">0</span>
-    </div>
-    <div class="stats-item">
-      <span>Total Finalizados:</span>
-      <span id="totalFinalizados" class="stats-value">0</span>
-    </div>
-  </section>
+    <section>
+      <h2>Finalizados</h2>
+      <div class="table-container table-responsive-mobile">
+        <table id="tablaFinalizados">
+          <thead>
+            <tr>
+              <th>AMPO</th>
+              <th>Digitador</th>
+              <th>Fecha</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyFinalizados">
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-  <!-- TABLA PENDIENTES -->
-  <section>
-    <h2>Pendientes</h2>
-    <div class="table-container table-responsive-mobile">
-      <table id="tablaPendientes">
-        <thead>
-          <tr>
-            <th>AMPO</th>
-            <th>Digitador</th>
-            <th>Fecha</th>
-            <th>Pendiente</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyPendientes">
-          <!-- Las filas se agregarán aquí dinámicamente desde JavaScript -->
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- TABLA FINALIZADOS -->
-  <section>
-    <h2>Finalizados</h2>
-    <div class="table-container table-responsive-mobile">
-      <table id="tablaFinalizados">
-        <thead>
-          <tr>
-            <th>AMPO</th>
-            <th>Digitador</th>
-            <th>Fecha</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyFinalizados">
-           <!-- Las filas se agregarán aquí dinámicamente desde JavaScript -->
-        </tbody>
-      </table>
-    </div>
-  </section>
-</main>
-
-<script src="./script.js"></script>
+  <script type="module" src="./script.js"></script>
 </body>
+
 </html>

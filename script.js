@@ -1,41 +1,61 @@
-// Obtener datos existentes y asegurar compatibilidad de los identificadores
-let registros = JSON.parse(localStorage.getItem('registros')) || [];
-let needsSave = false;
-registros.forEach((r, i) => {
-  if (!r.id) {
-    r.id = Date.now().toString() + i;
-    needsSave = true;
-  }
-});
-if (needsSave) guardar();
+// 1. Importar Firebase modular
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  deleteDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-// Referencias a Elementos del DOM
+// 2. Tu configuración exacta
+const firebaseConfig = {
+  apiKey: "AIzaSyAmOIbNkqwMjIfhi87Zp6yO4QgNLdimSI",
+  authDomain: "digitadores-cb225.firebaseapp.com",
+  projectId: "digitadores-cb225",
+  storageBucket: "digitadores-cb225.firebasestorage.app",
+  messagingSenderId: "480756381767",
+  appId: "1:480756381767:web:41b173d50ed12e01539962",
+  measurementId: "G-2WRKRP4RNK"
+};
+
+// 3. Inicializar App y Base de Datos
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const registrosRef = collection(db, "registros_ampo");
+
+let registros = [];
+
+// Referencias del DOM
 const form = document.getElementById('registroForm');
 const tbodyPendientes = document.getElementById('tbodyPendientes');
 const tbodyFinalizados = document.getElementById('tbodyFinalizados');
 const spanTotalPendiente = document.getElementById('totalPendiente');
 const spanTotalFinalizados = document.getElementById('totalFinalizados');
-
 const btnLimpiar = document.getElementById('btnLimpiar');
 const btnEliminarTodo = document.getElementById('btnEliminarTodo');
 
-// Inicialización de Eventos y UI
-document.addEventListener('DOMContentLoaded', () => {
+// 4. Escuchador en tiempo real de la Nube
+onSnapshot(registrosRef, (snapshot) => {
+  registros = [];
+  snapshot.forEach((doc) => {
+    registros.push({ id: doc.id, ...doc.data() });
+  });
   render();
 });
 
+// Eventos
 form.addEventListener('submit', agregarRegistro);
 btnLimpiar.addEventListener('click', limpiarFormulario);
 btnEliminarTodo.addEventListener('click', eliminarTodo);
 
 // Funciones Principales
-function guardar() {
-  localStorage.setItem('registros', JSON.stringify(registros));
-}
+async function agregarRegistro(event) {
+  event.preventDefault();
 
-function agregarRegistro(event) {
-  event.preventDefault(); // Evita que la página se recargue al enviar el formulario
-  
   const inputAmpo = document.getElementById('ampo');
   const inputDigitador = document.getElementById('digitador');
   const inputFecha = document.getElementById('fecha');
@@ -45,44 +65,49 @@ function agregarRegistro(event) {
   const digitador = inputDigitador.value.trim();
   const fecha = inputFecha.value;
   const pendiente = parseInt(inputPendiente.value, 10);
-  
-  // Pequeña validación extra
+
   if (!ampo || !digitador || !fecha || isNaN(pendiente)) {
     alert("Por favor, completa todos los campos correctamente.");
     return;
   }
-  
-  registros.push({
-    id: Date.now().toString(), // ID único
-    ampo,
-    digitador,
-    fecha,
-    pendiente,
-    estado: 'Pendiente'
-  });
-  
-  guardar();
-  render();
-  limpiarFormulario();
-  inputAmpo.focus(); // Retorna el foco al primer input
-}
 
-function finalizar(id) {
-  const index = registros.findIndex(r => r.id === id);
-  if (index !== -1) {
-    registros[index].estado = 'Finalizado';
-    guardar();
-    render();
+  try {
+    await addDoc(registrosRef, {
+      ampo,
+      digitador,
+      fecha,
+      pendiente,
+      estado: 'Pendiente'
+    });
+    limpiarFormulario();
+    inputAmpo.focus();
+  } catch (error) {
+    console.error("Error al agregar documento: ", error);
+    alert("Hubo un error al guardar. Revisa tu conexión a internet.");
   }
 }
 
-function eliminarTodo() {
+window.finalizar = async function (id) {
+  try {
+    const docRef = doc(db, "registros_ampo", id);
+    await updateDoc(docRef, { estado: 'Finalizado' });
+  } catch (error) {
+    console.error("Error al actualizar: ", error);
+  }
+};
+
+async function eliminarTodo() {
   if (registros.length === 0) return;
-  
-  if (confirm('¿Estás seguro de que deseas eliminar todos los registros de forma permanente?')) {
-    registros = [];
-    guardar();
-    render();
+
+  if (confirm('¿Estás seguro de que deseas eliminar TODOS los registros de forma permanente en la nube?')) {
+    try {
+      const querySnapshot = await getDocs(registrosRef);
+      querySnapshot.forEach(async (documento) => {
+        await deleteDoc(doc(db, "registros_ampo", documento.id));
+      });
+    } catch (error) {
+      console.error("Error al eliminar todo: ", error);
+    }
   }
 }
 
@@ -90,17 +115,13 @@ function limpiarFormulario() {
   form.reset();
 }
 
-/**
- * Función que renderiza ambas tablas y reinicia los contadores.
- */
 function render() {
-  // Limpiar el contenido actual para evitar duplicados
   tbodyPendientes.innerHTML = '';
   tbodyFinalizados.innerHTML = '';
-  
+
   let totalPendiente = 0;
   let totalFinalizados = 0;
-  
+
   registros.forEach(r => {
     if (r.estado === 'Pendiente') {
       totalPendiente += r.pendiente;
@@ -110,63 +131,45 @@ function render() {
       tbodyFinalizados.appendChild(crearFilaFinalizado(r));
     }
   });
-  
-  // Actualización del texto utilizando las variables DOM correctas
+
   spanTotalPendiente.textContent = totalPendiente;
   spanTotalFinalizados.textContent = totalFinalizados;
 }
 
-/**
- * Crea una fila en la tabla de Pendientes previniendo ataques de tipo inyección XSS
- */
 function crearFilaPendiente(registro) {
   const tr = document.createElement('tr');
-  
   tr.appendChild(crearCelda(registro.ampo, 'AMPO'));
   tr.appendChild(crearCelda(registro.digitador, 'Digitador'));
   tr.appendChild(crearCelda(registro.fecha, 'Fecha'));
   tr.appendChild(crearCelda(registro.pendiente, 'Pendiente'));
-  
-  // Columna de Acciones
+
   const tdAcciones = document.createElement('td');
   tdAcciones.setAttribute('data-label', 'Acciones');
-  
+
   const btnFinalizar = document.createElement('button');
   btnFinalizar.textContent = '✔ Finalizar';
   btnFinalizar.className = 'success';
   btnFinalizar.ariaLabel = `Finalizar registro ${registro.ampo}`;
-  
-  // Asignamos el evento de esta manera para evitar el uso de eval() oculto y strings
-  btnFinalizar.onclick = () => finalizar(registro.id);
-  
+  btnFinalizar.onclick = () => window.finalizar(registro.id);
+
   tdAcciones.appendChild(btnFinalizar);
   tr.appendChild(tdAcciones);
-  
   return tr;
 }
 
-/**
- * Crea una fila en la tabla de Finalizados previniendo ataques XSS
- */
 function crearFilaFinalizado(registro) {
   const tr = document.createElement('tr');
-  
   tr.appendChild(crearCelda(registro.ampo, 'AMPO'));
   tr.appendChild(crearCelda(registro.digitador, 'Digitador'));
   tr.appendChild(crearCelda(registro.fecha, 'Fecha'));
   tr.appendChild(crearCelda(registro.pendiente, 'Cantidad'));
-  
   return tr;
 }
 
-/**
- * Función auxiliar para crear y poblar celdas td previniendo XSS.
- * El data-label es útil para simular encabezados en la vista móvil.
- */
 function crearCelda(texto, labelMobile) {
   const td = document.createElement('td');
-  td.textContent = texto; // textContent es seguro contra XSS, porque escapa etiquetas HTML
-  if(labelMobile) {
+  td.textContent = texto;
+  if (labelMobile) {
     td.setAttribute('data-label', labelMobile);
   }
   return td;
