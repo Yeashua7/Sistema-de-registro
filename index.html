@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de registro de AMPOs y gestión de digitadores. Administra los procesos pendientes y finalizados de forma eficiente.">
   <title>DIGITADORES GOB</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -36,7 +37,10 @@
       </section>
 
       <div class="actions">
-        <button type="submit" class="primary">Agregar Registro</button>
+        <button type="submit" class="primary" id="btnAgregar">
+          <span class="spinner"></span>
+          <span class="btn-text">Agregar Registro</span>
+        </button>
         <button type="button" id="btnLimpiar" class="secondary">Limpiar form</button>
         <button type="button" id="btnDescargar" class="success">📥 Exportar Excel (CSV)</button>
         <button type="button" id="btnEliminarTodo" class="danger">Eliminar Todo</button>
@@ -91,6 +95,21 @@
       </div>
     </section>
   </main>
+
+  <!-- Contenedor para Notificaciones (Toasts) -->
+  <div id="toast-container"></div>
+
+  <!-- Modal para confirmaciones -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-content">
+      <h3 class="modal-title">Confirmar Acción</h3>
+      <p class="modal-body" id="confirmModalBody">¿Estás seguro?</p>
+      <div class="modal-actions">
+        <button class="secondary" id="btnCancelModal">Cancelar</button>
+        <button class="danger" id="btnConfirmModal">Eliminar Todo</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./script.js"></script>
 </body>
